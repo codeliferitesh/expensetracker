@@ -1,4 +1,3 @@
-#Expense Tracker App@Ritesh Verma Apps::))
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
@@ -10,26 +9,28 @@ class ExpenseTrackerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("💰 Personal Finance Manager - Ritesh Verma Apps")
-        self.root.geometry("800x700") 
-        self.root.config(bg="#212121") 
+        self.root.geometry("900x750")
+        self.root.config(bg="#212121")
 
         self.transactions = []
-        #Compulsory to Add Income--😉
         self.has_income = False  
 
-
+        # --- Styling ---
         style = ttk.Style()
         style.theme_use('clam')
         style.configure('TFrame', background='#212121')
         style.configure('TLabel', background='#212121', foreground='white', font=('Arial', 12))
 
+        # --- Title ---
         title = tk.Label(root, text="💸 Income & Expense Tracker", font=("Arial", 28, "bold"), fg="#00ff99", bg="#212121")
         title.pack(pady=15)
 
+        # --- Balance Display ---
         self.balance_var = tk.StringVar(value="Current Balance: ₹0.00")
         self.balance_label = tk.Label(root, textvariable=self.balance_var, font=("Arial", 18, "bold"), fg="#ff9900", bg="#212121")
         self.balance_label.pack(pady=5)
 
+        # --- Input Form ---
         form_frame = ttk.Frame(root, padding="10 10 10 10")
         form_frame.pack(pady=5)
 
@@ -40,7 +41,7 @@ class ExpenseTrackerApp:
         self.date_var = tk.StringVar(value=datetime.now().strftime("%Y-%m-%d"))
         self.category_var = tk.StringVar()
         self.amount_var = tk.StringVar()
-        self.transaction_type_var = tk.StringVar(value='Income') # Default MUST be Income
+        self.transaction_type_var = tk.StringVar(value='Income') 
 
         self.date_entry = tk.Entry(form_frame, textvariable=self.date_var, font=("Arial", 12), width=25, bg="#333333", fg="white", insertbackground='white')
         self.date_entry.grid(row=0, column=1, pady=5)
@@ -48,7 +49,6 @@ class ExpenseTrackerApp:
         self.expense_categories = ['Food 🍕', 'Transport 🚗', 'Shopping 🛍️', 'Bills 🧾', 'Entertainment 🎬', 'Health 🏥', 'Other ❓']
         self.income_sources = ['Salary 💵', 'Investment 📈', 'Gift 🎁', 'Other Income']
         
-        # Initial Category values must be income
         self.category_combo = ttk.Combobox(form_frame, textvariable=self.category_var, values=self.income_sources, state="readonly", font=("Arial", 12), width=23)
         self.category_combo.grid(row=1, column=1, pady=5)
         self.category_combo.current(0)
@@ -56,7 +56,7 @@ class ExpenseTrackerApp:
         self.amount_entry = tk.Entry(form_frame, textvariable=self.amount_var, font=("Arial", 12), width=25, bg="#333333", fg="white", insertbackground='white')
         self.amount_entry.grid(row=2, column=1, pady=5)
 
-        #Disabling Expenses till Income is not added
+        # --- Radio Buttons ---
         type_frame = ttk.Frame(form_frame)
         type_frame.grid(row=3, column=0, columnspan=2, pady=5)
 
@@ -66,7 +66,6 @@ class ExpenseTrackerApp:
         self.income_radio = tk.Radiobutton(type_frame, text="Income", variable=self.transaction_type_var, value='Income', bg="#212121", fg="white", selectcolor="#212121", font=("Arial", 12), command=lambda: self.update_categories(self.income_sources))
         self.income_radio.pack(side=tk.LEFT, padx=10)
         
-        # Disable Expense option until first income is added
         self.expense_radio.config(state=tk.DISABLED, fg="#777777")
         self.income_radio.config(state=tk.NORMAL)
 
@@ -86,12 +85,12 @@ class ExpenseTrackerApp:
         balance_plot_btn = tk.Button(button_frame, text="📈 Balance History", font=("Arial", 12, "bold"), bg="#66ccff", fg="#000", activebackground="#52a3cc", command=self.show_balance_history, relief=tk.FLAT, padx=5, pady=5)
         balance_plot_btn.grid(row=0, column=3, padx=5)
 
-        # Transaction List
+        # --- Transaction List ---
         list_frame = ttk.Frame(root)
         list_frame.pack(padx=10, pady=5)
         
         scrollbar = tk.Scrollbar(list_frame, orient=tk.VERTICAL)
-        self.transaction_listbox = tk.Listbox(list_frame, font=("Courier New", 11), width=75, height=12, bg="#333333", fg="white", selectbackground="#00ff99", selectforeground="#000", yscrollcommand=scrollbar.set)
+        self.transaction_listbox = tk.Listbox(list_frame, font=("Courier New", 11), width=85, height=12, bg="#333333", fg="white", selectbackground="#00ff99", selectforeground="#000", yscrollcommand=scrollbar.set)
         scrollbar.config(command=self.transaction_listbox.yview)
 
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -108,9 +107,12 @@ class ExpenseTrackerApp:
         self.category_var.set(new_values[0])
         
     def calculate_balance(self):
-        balance = 0
-        for _, _, amount, type_ in self.transactions:
-            if type_ == 'Income':
+        balance = 0.0
+        for item in self.transactions:
+            amount = item[2]
+            trans_type = item[3]
+            
+            if trans_type == 'Income':
                 balance += amount
             else:
                 balance -= amount
@@ -120,9 +122,7 @@ class ExpenseTrackerApp:
         current_balance = self.calculate_balance()
         fg_color = '#00ff99' if current_balance >= 0 else '#ff6666'
         self.balance_var.set(f"Current Balance: ₹{current_balance:,.2f}")
-        
         self.balance_label.config(fg=fg_color)
-        
 
     def add_transaction(self):
         date_str = self.date_var.get()
@@ -130,10 +130,9 @@ class ExpenseTrackerApp:
         amount_str = self.amount_var.get()
         type_ = self.transaction_type_var.get()
 
-        # Enforce Income First rule
         if type_ == 'Expense' and not self.has_income:
             messagebox.showwarning("🚫 Income Required", "Please record your first Income before adding any Expenses!")
-            self.transaction_type_var.set('Income') # Switch back to Income
+            self.transaction_type_var.set('Income')
             self.update_categories(self.income_sources)
             return
 
@@ -143,35 +142,33 @@ class ExpenseTrackerApp:
             if amount <= 0:
                 raise ValueError("Amount must be positive")
         except ValueError as e:
-            messagebox.showerror("❌ Invalid Input", f"Please check the format:\nDate must be YYYY-MM-DD.\nAmount must be a positive number.\nError: {e}")
+            messagebox.showerror("❌ Invalid Input", f"Please check format.\nError: {e}")
             return
 
         self.transactions.append((date_obj, category, amount, type_))
         
-        # Check if this is the first income
         if type_ == 'Income' and not self.has_income:
             self.has_income = True
-            # Enable Expense buttons now
             self.expense_radio.config(state=tk.NORMAL, fg="white")
             self.income_radio.config(state=tk.NORMAL)
         
-        color_tag = 'income' if type_ == 'Income' else 'expense'
         display_amount = f"+₹{amount:,.2f}" if type_ == 'Income' else f"-₹{amount:,.2f}"
-        
         display_text = f"{date_obj.date()} | {type_:<7} | {category[:15]:<15} | {display_amount:<15}"
         
         self.transaction_listbox.insert(tk.END, display_text)
         
+        # --- FIXED COLORING LOGIC HERE ---
+        # Get the index of the last item added
+        last_index = self.transaction_listbox.size() - 1
+        
         if type_ == 'Income':
-            self.transaction_listbox.tag_configure('income', foreground='#00ff99')
-            self.transaction_listbox.itemconfig(tk.END, 'income')
+            self.transaction_listbox.itemconfig(last_index, {'fg': '#00ff99'})
         else:
-            self.transaction_listbox.tag_configure('expense', foreground='#ff6666')
-            self.transaction_listbox.itemconfig(tk.END, 'expense')
+            self.transaction_listbox.itemconfig(last_index, {'fg': '#ff6666'})
+        # ---------------------------------
 
         self.amount_var.set("")
         self.update_balance()
-
 
     def delete_transaction(self):
         try:
@@ -180,24 +177,20 @@ class ExpenseTrackerApp:
             messagebox.showwarning("No Selection", "Please select a transaction to delete.")
             return
 
-        # Check the type of the transaction being deleted
         deleted_type = self.transactions[selected_index][3]
         
         self.transactions.pop(selected_index)
         self.transaction_listbox.delete(selected_index)
         
-        # Re-check income status if an income item was deleted
         if deleted_type == 'Income':
             self.has_income = any(t[3] == 'Income' for t in self.transactions)
             if not self.has_income:
-                # Re-disable expense buttons and switch back to Income mode
                 self.expense_radio.config(state=tk.DISABLED, fg="#777777")
                 self.transaction_type_var.set('Income')
                 self.update_categories(self.income_sources)
         
         self.update_balance()
         messagebox.showinfo("Deletion Successful", "Transaction deleted.")
-
 
     def show_category_summary(self):
         if not self.transactions:
@@ -239,18 +232,14 @@ class ExpenseTrackerApp:
         canvas_pie.draw()
         canvas_pie.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         
-    
     def show_balance_history(self):
         if not self.transactions:
             messagebox.showinfo("No Data", "Add some transactions first!")
             return
 
         df = pd.DataFrame(self.transactions, columns=['Date', 'Category', 'Amount', 'Type'])
-        
         df['Signed_Amount'] = df.apply(lambda row: row['Amount'] if row['Type'] == 'Income' else -row['Amount'], axis=1)
-        
         df = df.sort_values(by='Date')
-        
         df['Running_Balance'] = df['Signed_Amount'].cumsum()
         
         dates = df['Date']
@@ -262,27 +251,21 @@ class ExpenseTrackerApp:
         plot_win.config(bg="#212121")
 
         fig, ax = plt.subplots(figsize=(6, 4))
-        
         ax.plot(dates, running_balance, marker='o', linestyle='-', color='#66ccff', linewidth=2, markersize=4)
-        
         ax.axhline(0, color='red', linestyle='--', linewidth=1, alpha=0.7)
-        
         ax.set_title("Cumulative Balance Over Time", fontsize=14, fontweight="bold", color='white')
         ax.set_ylabel("Balance (₹)", color='white')
         ax.set_xlabel("Date", color='white')
         ax.tick_params(axis='x', rotation=45, colors='white')
         ax.tick_params(axis='y', colors='white')
         ax.grid(axis='both', linestyle='--', alpha=0.5)
-        
         fig.patch.set_facecolor('#333333')
         ax.set_facecolor('#333333')
-        
         plt.tight_layout()
 
         canvas_line = FigureCanvasTkAgg(fig, master=plot_win)
         canvas_line.draw()
         canvas_line.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
 
 if __name__ == "__main__":
     root = tk.Tk()
